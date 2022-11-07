@@ -1,0 +1,13 @@
+server:
+  port: 8081
+
+spring:
+  profiles:
+    include: keys
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+    hibernate:
+      ddl-auto: update
