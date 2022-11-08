@@ -13,8 +13,9 @@ public class WebSecurityConfig {
     @Bean
     protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http.csrf().disable()
-                .authorizeRequests()
+        http.csrf()
+                .ignoringAntMatchers("/user/**");
+        http.authorizeRequests()
                 .antMatchers("/user/**").permitAll()
                 .antMatchers("/images/**").permitAll()
                 .antMatchers("/css/**").permitAll()
