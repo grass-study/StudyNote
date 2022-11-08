@@ -6,8 +6,8 @@ import com.ciny.studynote.model.Product;
 import com.ciny.studynote.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.SQLException;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -15,31 +15,29 @@ import java.util.List;
 public class ProductService {
     private final ProductRepository productRepository;
 
-    public List<Product> getProducts() throws SQLException {
-        List<Product> products = productRepository.getProducts();
+    @Transactional(readOnly = true)
+    public List<Product> getProducts() {
+        List<Product> products = productRepository.findAll();
 
         return products;
     }
 
-    public Product createProduct(ProductRequestDto requestDto) throws SQLException {
+    @Transactional
+    public Product createProduct(ProductRequestDto requestDto) {
         Product product = new Product(requestDto);
 
-        productRepository.createProduct(product);
+        productRepository.save(product);
 
         return product;
     }
 
-    public Product updateProduct(Long id, ProductMypriceRequestDto requestDto) throws SQLException {
-        Product product = productRepository.getProduct(id);
-
-        if (product == null) {
-            throw new NullPointerException("존재하지 않는 아이디입니다.");
-        }
+    @Transactional
+    public Product updateProduct(Long id, ProductMypriceRequestDto requestDto) {
+        Product product = productRepository.findById(id).orElseThrow(() -> new NullPointerException("존재하지 않는 아이디입니다."));
 
         int myprice = requestDto.getMyprice();
-        productRepository.updateMyprice(id, myprice);
+        product.setMyprice(myprice);
 
-        product = productRepository.getProduct(id);
         return product;
     }
 }
