@@ -15,12 +15,22 @@ public class WebSecurityConfig {
 
         http.csrf().disable()
                 .authorizeRequests()
+                .antMatchers("/user/**").permitAll()
+                .antMatchers("/images/**").permitAll()
+                .antMatchers("/css/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
+
+                .httpBasic()
+                .and()
+
                 .formLogin()
+                .loginPage("/user/login")
                 .defaultSuccessUrl("/")
+                .failureUrl("/user/login?error")
                 .permitAll()
                 .and()
+
                 .logout()
                 .permitAll();
 
