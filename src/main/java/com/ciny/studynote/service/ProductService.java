@@ -16,15 +16,13 @@ public class ProductService {
     private final ProductRepository productRepository;
 
     @Transactional(readOnly = true)
-    public List<Product> getProducts() {
-        List<Product> products = productRepository.findAll();
-
-        return products;
+    public List<Product> getProducts(Long userId) {
+        return productRepository.findAllByUserId(userId);
     }
 
     @Transactional
-    public Product createProduct(ProductRequestDto requestDto) {
-        Product product = new Product(requestDto);
+    public Product createProduct(ProductRequestDto requestDto, Long userId) {
+        Product product = new Product(requestDto, userId);
 
         productRepository.save(product);
 
@@ -32,8 +30,12 @@ public class ProductService {
     }
 
     @Transactional
-    public Product updateProduct(Long id, ProductMypriceRequestDto requestDto) {
+    public Product updateProduct(Long id, Long userId, ProductMypriceRequestDto requestDto) {
         Product product = productRepository.findById(id).orElseThrow(() -> new NullPointerException("존재하지 않는 아이디입니다."));
+
+        if (product.getUserId() != userId) {
+            throw new IllegalArgumentException("나의 셀렉샵에 추가된 상품이 아닙니다.");
+        }
 
         int myprice = requestDto.getMyprice();
         product.setMyprice(myprice);
