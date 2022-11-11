@@ -19,12 +19,11 @@ public class WebSecurityConfig {
     @Bean
     protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http.csrf()
-                .ignoringAntMatchers("/user/**");
+        http.csrf().disable();
         http.authorizeRequests()
                 .antMatchers("/user/**").permitAll()
-                .antMatchers("/images/**").permitAll()
                 .antMatchers("/css/**").permitAll()
+                .antMatchers("/images/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
 
@@ -33,12 +32,15 @@ public class WebSecurityConfig {
 
                 .formLogin()
                 .loginPage("/user/login")
+                .loginProcessingUrl("/user/login")
                 .defaultSuccessUrl("/")
                 .failureUrl("/user/login?error")
                 .permitAll()
                 .and()
 
                 .logout()
+
+                .logoutUrl("/user/logout")
                 .permitAll();
 
         return http.build();
