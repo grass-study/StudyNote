@@ -3,9 +3,11 @@ package com.ciny.studynote.controller;
 import com.ciny.studynote.dto.ProductMypriceRequestDto;
 import com.ciny.studynote.dto.ProductRequestDto;
 import com.ciny.studynote.model.Product;
+import com.ciny.studynote.model.UserRoleEnum;
 import com.ciny.studynote.security.UserDetailsImpl;
 import com.ciny.studynote.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,5 +39,12 @@ public class ProductController {
                                  @AuthenticationPrincipal UserDetailsImpl userDetails) {
         Long userId = userDetails.getUser().getId();
         return productService.updateProduct(id, userId, requestDto);
+    }
+
+    // 관리자용 상품 조회하기
+    @Secured(UserRoleEnum.Authority.ADMIN)
+    @GetMapping("/api/admin/products")
+    public List<Product> getAllProducts() {
+        return productService.getAllProducts();
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @Service
@@ -18,6 +19,11 @@ public class ProductService {
     @Transactional(readOnly = true)
     public List<Product> getProducts(Long userId) {
         return productRepository.findAllByUserId(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Product> getAllProducts() {
+        return productRepository.findAll();
     }
 
     @Transactional
@@ -33,7 +39,7 @@ public class ProductService {
     public Product updateProduct(Long id, Long userId, ProductMypriceRequestDto requestDto) {
         Product product = productRepository.findById(id).orElseThrow(() -> new NullPointerException("존재하지 않는 아이디입니다."));
 
-        if (product.getUserId() != userId) {
+        if (!Objects.equals(product.getUserId(), userId)) {
             throw new IllegalArgumentException("나의 셀렉샵에 추가된 상품이 아닙니다.");
         }
 
