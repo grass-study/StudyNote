@@ -5,6 +5,7 @@ import com.ciny.studynote.dto.SocialUserInfoDto;
 import com.ciny.studynote.model.User;
 import com.ciny.studynote.model.UserRoleEnum;
 import com.ciny.studynote.repository.UserRepository;
+import com.ciny.studynote.security.UserDetailsImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,6 +15,10 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +27,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -70,9 +76,38 @@ public class UserService {
         userRepository.save(user);
     }
 
+    @Transactional
     public void kakaoLogin(String code) throws JsonProcessingException {
         String accessToken = getAccessToken(code);
         SocialUserInfoDto socialUserInfoDto = getSocialUserInfo(accessToken);
+
+        // DB에 중복된 카카오ID 가 있는지 확인
+        Long kakaoId = socialUserInfoDto.getId();
+        User kakaoUser = userRepository.findByKakaoId(kakaoId).orElse(null);
+
+        // 중복 유저가 없을 경우에만 회원가입 진행
+        if (kakaoUser == null) {
+            String nickname = socialUserInfoDto.getNickname();
+            String password = UUID.randomUUID().toString();
+            String encodePassword = passwordEncoder.encode(password);
+            String email = socialUserInfoDto.getEmail();
+            UserRoleEnum role = UserRoleEnum.USER;
+
+            kakaoUser = User.builder()
+                    .username(nickname)
+                    .password(encodePassword)
+                    .email(email)
+                    .role(role)
+                    .kakaoId(kakaoId)
+                    .build();
+
+            userRepository.save(kakaoUser);
+        }
+
+        // 강제 로그인 처리
+        UserDetails userDetails = new UserDetailsImpl(kakaoUser);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     private String getAccessToken(String code) throws JsonProcessingException {
