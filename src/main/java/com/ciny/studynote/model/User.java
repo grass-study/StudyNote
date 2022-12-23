@@ -30,14 +30,14 @@ public class User {
     private UserRoleEnum role;
 
     @Column(unique = true)
-    private Long kakaoId;
+    private String socialId;
 
     @Builder
-    public User(String username, String password, String email, UserRoleEnum role, Long kakaoId) {
+    public User(String username, String password, String email, UserRoleEnum role, String socialId) {
         this.username = username;
         this.password = password;
         this.email = email;
         this.role = role;
-        this.kakaoId = kakaoId;
+        this.socialId = socialId;
     }
 }
