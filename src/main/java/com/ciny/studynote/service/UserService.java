@@ -1,11 +1,19 @@
 package com.ciny.studynote.service;
 
 import com.ciny.studynote.dto.SignupRequestDto;
+import com.ciny.studynote.dto.TokenInfo;
+import com.ciny.studynote.global.component.JwtTokenProvider;
 import com.ciny.studynote.model.User;
 import com.ciny.studynote.model.UserRoleEnum;
 import com.ciny.studynote.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +27,8 @@ public class UserService {
     private static String ADMIN_TOKEN;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final AuthenticationManagerBuilder authenticationManagerBuilder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Transactional
     public void registerUser(SignupRequestDto requestDto) {
@@ -49,5 +59,28 @@ public class UserService {
                 .build();
 
         userRepository.save(user);
+    }
+
+    @Transactional
+    public TokenInfo login(String username, String password) {
+        // 1. 로그인 id와 password 기반으로 authentication 객체 생성
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+        // 2. 실제 검증
+        Authentication authentication;
+        try {
+            authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        } catch (AuthenticationException e) {
+            throw new IllegalArgumentException("아이디 혹은 비밀번호가 잘못되었습니다.");
+        }
+        // 3. 인증 정보를 기반으로 토큰 생성
+        TokenInfo tokenInfo = jwtTokenProvider.generateToken(authentication);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        return tokenInfo;
+    }
+
+    @Transactional(readOnly = true)
+    public User findLoginUser(String username) {
+        return userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다"));
     }
 }

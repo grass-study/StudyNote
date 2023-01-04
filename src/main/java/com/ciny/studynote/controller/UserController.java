@@ -1,46 +1,43 @@
 package com.ciny.studynote.controller;
 
-import com.ciny.studynote.dto.SignupRequestDto;
-import com.ciny.studynote.service.SocialUserService;
+import com.ciny.studynote.dto.LoginRequestDto;
+import com.ciny.studynote.dto.TokenInfo;
+import com.ciny.studynote.dto.TokenResponseDto;
 import com.ciny.studynote.service.UserService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 
 @RequiredArgsConstructor
-@Controller
+@RestController
 public class UserController {
 
     private final UserService userService;
-    private final SocialUserService socialUserService;
 
-    // 회원 로그인 페이지
-    @GetMapping("/user/login")
-    public String login() {
-        return "login";
-    }
+    @PostMapping("/user/login")
+    public TokenResponseDto login(@RequestBody LoginRequestDto loginRequestDto, HttpServletResponse response) {
+        TokenInfo tokenInfo = userService.login(loginRequestDto.getUsername(), loginRequestDto.getPassword());
 
-    // 회원 가입 페이지
-    @GetMapping("/user/signup")
-    public String signup() {
-        return "signup";
-    }
+        // accessToken reponse header에 담아 보내기
+        TokenResponseDto tokenResponseDto = TokenResponseDto.builder()
+                .grantType(tokenInfo.getGrantType())
+                .accessTokenLifetime(tokenInfo.getAccessTokenLifetime())
+                .refreshTokenLifetime(tokenInfo.getRefreshTokenLifetime())
+                .build();
 
-    // 회원 가입 요청 처리
-    @PostMapping("/user/signup")
-    public String registerUser(SignupRequestDto requestDto) {
-        userService.registerUser(requestDto);
-        return "redirect:/user/login";
-    }
+        response.setHeader("selectshop_access_token", tokenInfo.getAccessToken());
 
-    @GetMapping("/user/{provider}/callback")
-    public String socialLogin(@RequestParam String code, @PathVariable String provider) throws JsonProcessingException {
-        socialUserService.socialLogin(code, provider);
+        // 리프레시토큰 쿠키에 담아 보내기
+        Cookie cookie = new Cookie("selectshop_refresh_token", tokenInfo.getRefreshToken());
+        response.addCookie(cookie);
+        cookie.setMaxAge((int) tokenInfo.getRefreshTokenLifetime());
+        cookie.setSecure(true);
+        cookie.setHttpOnly(true);
 
-        return "redirect:/";
+        return tokenResponseDto;
     }
 }

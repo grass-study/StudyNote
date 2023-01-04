@@ -25,24 +25,82 @@
     <button id="login-id-btn" onclick="location.href='/user/signup'">
         회원 가입하기
     </button>
-    <form action="/user/login" method="post">
+    <form>
         <div class="login-id-label">아이디</div>
-        <input type="text" name="username" class="login-input-box">
+        <input type="text" id="username" class="login-input-box">
 
         <div class="login-id-label">비밀번호</div>
-        <input type="password" name="password" class="login-input-box">
+        <input type="password" id="password" class="login-input-box">
 
-        <button id="login-id-submit">로그인</button>
+        <button id="login-id-submit" onclick="doLogin()">로그인</button>
     </form>
     <div id="login-failed" style="display:none" class="alert alert-danger" role="alert">로그인에 실패하였습니다.</div>
 </div>
 </body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
     const href = location.href;
     const queryString = href.substring(href.indexOf("?") + 1)
     if (queryString === 'error') {
         const errorDiv = document.getElementById('login-failed');
         errorDiv.style.display = 'block';
+    }
+
+    function doLogin() {
+        console.log(">>> doLogin 함수 안");
+        let username = $('#username').val();
+        let password = $('#password').val();
+
+        if (isValidInput(username) === false) {
+            window.alert("아이디를 입력하세요")
+            return;
+        } else if (isValidInput(password) === false) {
+            window.alert("비밀번호를 입력하세요")
+            return;
+        }
+
+        let data = {
+            'username': username,
+            'password': password
+        };
+
+        console.log(data);
+
+        $.ajax({
+            type: "POST",
+            url: "/user/login",
+            contentType: "application/json; charset=utf-8",
+            async: false,
+            data: JSON.stringify(data),
+            success: function (response) {
+                console.log(">>> ajax 통신 성공");
+                let access_token = response.getResponseHeader("selectshop_access_token");
+                console.log(access_token);
+
+                localStorage.setItem("selectshop_access_token", access_token);
+                setCookie('selectshop_username', username, response.accessTokenLifetime);
+            }
+        })
+
+        // if (document.cookie.indexOf(username) !== -1) {
+        //     window.location.href = 'http://localhost:8081/';
+        // }
+
+    }
+
+    function isValidInput(data) {
+        if (data == '') {
+            return false;
+        }
+        return true;
+    }
+
+    function setCookie(cookie_name, value, exp) {
+        const expdate = new Date();
+        expdate.setMilliseconds(expdate.getMilliseconds() + exp);
+
+        const cookie_value = escape(value) + ((exp == null) ? '' : '; expires=' + expdate.toUTCString());
+        document.cookie = cookie_name + '=' + cookie_value;
     }
 </script>
 </html>
