@@ -8,6 +8,7 @@ import com.ciny.studynote.model.UserRoleEnum;
 import com.ciny.studynote.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -70,7 +71,7 @@ public class UserService {
         try {
             authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
         } catch (AuthenticationException e) {
-            throw new IllegalArgumentException("아이디 혹은 비밀번호가 잘못되었습니다.");
+            throw new BadCredentialsException("아이디 혹은 비밀번호가 잘못되었습니다.");
         }
         // 3. 인증 정보를 기반으로 토큰 생성
         TokenInfo tokenInfo = jwtTokenProvider.generateToken(authentication);

@@ -2,11 +2,15 @@ package com.ciny.studynote.controller;
 
 import com.ciny.studynote.dto.ProductMypriceRequestDto;
 import com.ciny.studynote.dto.ProductRequestDto;
+import com.ciny.studynote.global.exception.RestApiException;
 import com.ciny.studynote.model.Product;
 import com.ciny.studynote.model.UserRoleEnum;
 import com.ciny.studynote.security.UserDetailsImpl;
 import com.ciny.studynote.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -21,9 +25,15 @@ public class ProductController {
 
     // 즐겨찾기 상품 전체 조회
     @GetMapping("/api/products")
-    public List<Product> getProducts(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity getProducts(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         Long userId = userDetails.getUser().getId();
-        return productService.getProducts(userId);
+        try {
+            return ResponseEntity.ok(productService.getProducts(userId));
+        } catch (AccessDeniedException ex) {
+            return new ResponseEntity(RestApiException.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .errorMessage(ex.getMessage()), HttpStatus.BAD_REQUEST);
+        }
     }
 
     // 즐겨찾기에 추가

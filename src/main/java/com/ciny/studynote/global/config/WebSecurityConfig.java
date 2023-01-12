@@ -49,7 +49,7 @@ public class WebSecurityConfig {
                 .csrf().disable()
                 .cors().configurationSource(corsConfigurationSource())
                 .and()
-                
+
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
 
@@ -57,7 +57,7 @@ public class WebSecurityConfig {
                 .antMatchers("/user/**").permitAll()
                 .antMatchers("/css/**").permitAll()
                 .antMatchers("/images/**").permitAll()
-                .antMatchers("/user/**").permitAll()
+                .antMatchers("/app/test/**").permitAll()
                 .antMatchers("/").permitAll()
                 .anyRequest().authenticated()
                 .and()
